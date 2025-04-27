@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Editor & Renderer</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Highlight.js for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <!-- Highlight.js line numbers plugin -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlightjs-line-numbers.min.js"></script>
+  <!-- Marked.js for Markdown parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Custom styling for markdown content with DB Markdown inspiration */
+    .markdown-body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      line-height: 1.75;
+      color: #1f2328;
+      padding: 1.5rem;
+    }
+    .markdown-body h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: #1f2328;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 0.5rem;
+    }
+    .markdown-body h2 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-top: 1.75rem;
+      margin-bottom: 0.75rem;
+      color: #1f2328;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 0.4rem;
+    }
+    .markdown-body h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: #1f2328;
+    }
+    .markdown-body h4 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: #1f2328;
+    }
+    .markdown-body p {
+      margin-bottom: 1.25rem;
+      color: #374151;
+    }
+    .markdown-body ul, .markdown-body ol {
+      margin-left: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .markdown-body li {
+      margin-bottom: 0.5rem;
+      color: #374151;
+    }
+    .markdown-body pre {
+      margin-bottom: 1.5rem;
+      border-radius: 0.5rem;
+      background-color: #f8fafc;
+      border: 1px solid #e5e7eb;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+    .markdown-body pre code {
+      padding: 0;
+      display: block;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #1f2328;
+      background-color: transparent;
+    }
+    .markdown-body code {
+      font-family: 'Fira Code', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      background-color: #eff6ff;
+      padding: 0.25em 0.5em;
+      border-radius: 4px;
+      color: #1e40af;
+      font-size: 0.9rem;
+    }
+    .markdown-body pre code {
+      background-color: transparent;
+      padding: 0;
+      color: inherit;
+    }
+    .markdown-body table {
+      width: 100%;
+      margin-bottom: 1.5rem;
+      border-collapse: collapse;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .markdown-body th, .markdown-body td {
+      border: 1px solid #e5e7eb;
+      padding: 0.75rem 1.25rem;
+      text-align: left;
+    }
+    .markdown-body th {
+      background-color: #f8fafc;
+      font-weight: 600;
+      color: #1f2328;
+    }
+    .markdown-body tr:nth-child(even) {
+      background-color: #f9fafb;
+    }
+    .markdown-body blockquote {
+      border-left: 4px solid #3b82f6;
+      padding: 1rem 1.5rem;
+      color: #4b5563;
+      background-color: #f0f6fc;
+      margin-bottom: 1.5rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+    }
+    .markdown-body strong {
+      font-weight: 700;
+      color: #1f2328;
+    }
+    .markdown-body img {
+      max-width: 100%;
+      height: auto;
+      margin: 1.5rem auto;
+      display: block;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .markdown-body hr {
+      height: 0.2em;
+      padding: 0;
+      margin: 2rem 0;
+      background-color: #e5e7eb;
+      border: 0;
+    }
+    .markdown-body a {
+      color: #2563eb;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .markdown-body a:hover {
+      color: #1e40af;
+      text-decoration: underline;
+    }
+    /* Editor styles */
+    #editor {
+      font-family: 'Fira Code', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      resize: none;
+      border: none;
+      outline: none;
+      padding: 1.5rem;
+      font-size: 0.9rem;
+      line-height: 1.75;
+      width: 100%;
+      height: calc(100vh - 120px); /* Adjusted for header and footer */
+      background-color: #ffffff;
+    }
+    /* Preview container styles */
+    #preview-container {
+      height: calc(100vh - 120px); /* Match editor height */
+      overflow-y: auto;
+    }
+    /* Drop zone styles */
+    .drop-zone {
+      border: 2px dashed #d1d5db;
+      border-radius: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #f9fafb;
+      padding: 2rem;
+      transition: all 0.3s ease;
+    }
+    .drop-zone.active {
+      border-color: #3b82f6;
+      background-color: #eff6ff;
+    }
+    .drop-zone-text {
+      font-size: 1.25rem;
+      color: #4b5563;
+      margin-bottom: 0.5rem;
+    }
+    .drop-zone-hint {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+    /* Hide line numbers in preview */
+    .markdown-body .hljs-ln-numbers {
+      display: none;
+    }
+    /* Print styles */
+    @media print {
+      body {
+        padding: 0;
+        margin: 0;
+      }
+      .markdown-body {
+        padding: 2cm;
+        max-width: 100%;
+      }
+      .no-print {
+        display: none !important;
+      }
+      /* Show line numbers in print */
+      .hljs-ln-numbers {
+        display: table-cell !important;
+      }
+    }
+    /* Responsive layout */
+    @media (max-width: 768px) {
+      .flex-col-reverse {
+        flex-direction: column-reverse;
+      }
+      #editor, #preview-container {
+        height: 50vh;
+      }
+    }
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 180px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -90px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.75rem;
+    }
+    .tooltip .tooltiptext::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #333 transparent transparent transparent;
+    }
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a1a1a1;
+    }
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 0.5rem;
+      max-width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #4b5563;
+    }
+    /* Body padding */
+    body {
+      padding: 0;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col p-0">
+  <!-- Header/Toolbar -->
+  <header class="bg-gradient-to-r from-pink-800 to-orange-800 text-white py-1 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center shadow-lg no-print">
+    <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+      <i class="fas fa-file-alt text-2xl"></i>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white">Markdown Editor & Renderer</h1>
+    </div>
+    <div class="flex flex-wrap justify-center gap-2 sm:gap-4">
+      <button id="instructions-btn" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 tooltip text-md sm:text-base">
+        <i class="fas fa-info-circle mr-2"></i> Instructions
+        <span class="tooltiptext">View instructions</span>
+      </button>
+      <button id="example-btn" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 tooltip text-md sm:text-base">
+        <i class="fas fa-file-alt mr-2"></i> Example
+        <span class="tooltiptext">Load example content</span>
+      </button>
+      <button id="clear-btn" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 tooltip text-md sm:text-base">
+        <i class="fas fa-eraser mr-2"></i> Clear
+        <span class="tooltiptext">Clear editor content</span>
+      </button>
+      <button id="copy-markdown-btn" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 tooltip text-md sm:text-base">
+        <i class="fas fa-copy mr-2"></i> Copy Markdown
+        <span class="tooltiptext">Copy markdown to clipboard</span>
+      </button>
+      <button id="copy-btn" class="px-3 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 tooltip text-md sm:text-base">
+        <i class="fas fa-copy mr-2"></i> Copy HTML
+        <span class="tooltiptext">Copy rendered HTML to clipboard</span>
+      </button>
+      <button id="print-btn" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 tooltip text-md sm:text-base">
+        <i class="fas fa-print mr-2"></i> Print
+        <span class="tooltiptext">Open printable version in new tab</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Instructions Modal -->
+  <div id="instructions-modal" class="modal">
+    <div class="modal-content">
+      <span id="modal-close" class="modal-close">×</span>
+      <h2 class="text-xl font-semibold text-indigo-700 mb-4"><i class="fas fa-info-circle mr-2"></i> Instructions</h2>
+      <div class="text-gray-700">
+        <p class="mb-2"><strong>Welcome to the Markdown Editor & Renderer!</strong> This tool allows you to write or paste markdown and see it rendered in real-time.</p>
+        <ul class="list-disc ml-5 mb-2">
+          <li>Type or paste markdown in the left panel</li>
+          <li>See the rendered output in real-time on the right</li>
+          <li>Drop a .md or .markdown file directly into the editor to load content</li>
+          <li>Use the toolbar buttons to manage your content:</li>
+          <ul class="list-circle ml-5">
+            <li><strong>Example</strong>: Load example markdown</li>
+            <li><strong>Clear</strong>: Clear the editor</li>
+            <li><strong>Copy Markdown</strong>: Copy the markdown text to clipboard</li>
+            <li><strong>Copy HTML</strong>: Copy the rendered HTML to clipboard</li>
+            <li><strong>Print</strong>: Open a clean, printable version in a new tab</li>
+          </ul>
+          <li>Your content is automatically saved to your browser's local storage</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content: Split View -->
+  <div class="flex flex-col md:flex-row flex-1">
+    <!-- Left Side: Editor -->
+    <div class="w-full md:w-1/2 border-r border-gray-300 bg-white relative no-print">
+      <div class="absolute top-2 right-2 z-10 bg-gray-100 text-gray-700 text-sm px-2 py-1 rounded-md shadow-sm">
+        <i class="fas fa-pencil-alt mr-1"></i> Editor
+      </div>
+      <div id="drop-overlay" class="hidden absolute inset-0 bg-blue-500 bg-opacity-10 drop-zone active z-20 border-4 border-dashed border-blue-500">
+        <div class="text-center text-blue-600">
+          <i class="fas fa-cloud-upload-alt text-5xl mb-3"></i>
+          <div class="text-xl font-semibold">Drop your .md or .markdown file here</div>
+          <div class="text-sm mt-2 text-blue-500">Release to load content</div>
+        </div>
+      </div>
+      <textarea id="editor" class="block" placeholder="Type or paste your markdown here, or drop a .md file..."></textarea>
+      <div id="initial-drop-zone" class="absolute inset-0 drop-zone z-10 hidden">
+        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+        <div class="drop-zone-text">Drop your markdown file here</div>
+        <div class="drop-zone-hint">or click to start typing</div>
+      </div>
+    </div>
+    
+    <!-- Right Side: Preview -->
+    <div class="w-full md:w-1/2 bg-white relative no-print" id="preview-container">
+      <div class="absolute top-2 right-2 z-10 bg-gray-100 text-gray-700 text-sm px-2 py-1 rounded-md shadow-sm">
+        <i class="fas fa-eye mr-1"></i> Preview
+      </div>
+      <div id="preview" class="markdown-body"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-gray-200  text-center py-3 no-print">
+    <p >Copyright © VoilaCode 2025. By Krishna Teja</p>
+  </footer>
+
+  <!-- Print Template (Hidden) -->
+  <div id="print-template" class="hidden">
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Markdown Rendered</title>
+      <!-- Highlight.js for syntax highlighting in print -->
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+      <!-- Highlight.js line numbers plugin -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlightjs-line-numbers.min.js"></script>
+      <style>
+        /* Print styles included here */
+        body {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+          line-height: 1.75;
+          color: #1f2328;
+          padding: 2cm;
+          max-width: 100%;
+        }
+        h1 {
+          font-size: 2.25rem;
+          font-weight: 700;
+          margin-top: 2rem;
+          margin-bottom: 1rem;
+          color: #1f2328;
+          border-bottom: 2px solid #e5e7eb;
+          padding-bottom: 0.5rem;
+        }
+        h2 {
+          font-size: 1.75rem;
+          font-weight: 600;
+          margin-top: 1.75rem;
+          margin-bottom: 0.75rem;
+          color: #1f2328;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 0.4rem;
+        }
+        h3 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          color: #1f2328;
+        }
+        h4 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          color: #1f2328;
+        }
+        p {
+          margin-bottom: 1.25rem;
+          color: #374151;
+        }
+        ul, ol {
+          margin-left: 1.5rem;
+          margin-bottom: 1.25rem;
+        }
+        li {
+          margin-bottom: 0.5rem;
+          color: #374151;
+        }
+        pre {
+          margin-bottom: 1.5rem;
+          border-radius: 0.5rem;
+          background-color: #f8fafc;
+          border: 1px solid #e5e7eb;
+          padding: 1.5rem;
+          overflow-x: auto;
+        }
+        pre code {
+          padding: 0;
+          display: block;
+          font-size: 0.9rem;
+          line-height: 1.5;
+          color: #1f2328;
+          background-color: transparent;
+        }
+        code {
+          font-family: 'Fira Code', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+          background-color: #eff6ff;
+          padding: 0.25em 0.5em;
+          border-radius: 4px;
+          color: #1e40af;
+          font-size: 0.9rem;
+        }
+        pre code {
+          background-color: transparent;
+          padding: 0;
+          color: inherit;
+        }
+        table {
+          width: 100%;
+          margin-bottom: 1.5rem;
+          border-collapse: collapse;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+          border: 1px solid #e5e7eb;
+          padding: 0.75rem 1.25rem;
+          text-align: left;
+        }
+        th {
+          background-color: #f8fafc;
+          font-weight: 600;
+          color: #1f2328;
+        }
+        tr:nth-child(even) {
+          background-color: #f9fafb;
+        }
+        blockquote {
+          border-left: 4px solid #3b82f6;
+          padding: 1rem 1.5rem;
+          color: #4b5563;
+          background-color: #f0f6fc;
+          margin-bottom: 1.5rem;
+          border-radius: 0 0.5rem 0.5rem 0;
+        }
+        strong {
+          font-weight: 700;
+          color: #1f2328;
+        }
+        img {
+          max-width: 100%;
+          height: auto;
+          margin: 1.5rem auto;
+          display: block;
+          border-radius: 0.5rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        hr {
+          height: 0.2em;
+          padding: 0;
+          margin: 2rem 0;
+          background-color: #e5e7eb;
+          border: 0;
+        }
+        a {
+          color: #2563eb;
+          text-decoration: none;
+        }
+        a:hover {
+          color: #1e40af;
+          text-decoration: underline;
+        }
+        /* Style for line numbers in print */
+        .hljs-ln {
+          border-collapse: collapse;
+        }
+        .hljs-ln-numbers {
+          text-align: right;
+          color: #6b7280;
+          padding-right: 1rem;
+          vertical-align: top;
+          border-right: 1px solid #e5e7eb;
+        }
+        .hljs-ln-code {
+          padding-left: 1rem;
+        }
+      </style>
+    </head>
+    <body>
+      <div id="print-content"></div>
+      <!-- Initialize Highlight.js with line numbers for print -->
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          document.querySelectorAll('pre code').forEach((el) => {
+            hljs.highlightElement(el);
+            hljs.lineNumbersBlock(el);
+          });
+        });
+      </script>
+    </body>
+    </html>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const editor = document.getElementById('editor');
+      const preview = document.getElementById('preview');
+      const previewContainer = document.getElementById('preview-container');
+      const instructionsBtn = document.getElementById('instructions-btn');
+      const instructionsModal = document.getElementById('instructions-modal');
+      const modalClose = document.getElementById('modal-close');
+      const clearBtn = document.getElementById('clear-btn');
+      const exampleBtn = document.getElementById('example-btn');
+      const copyMarkdownBtn = document.getElementById('copy-markdown-btn');
+      const copyBtn = document.getElementById('copy-btn');
+      const printBtn = document.getElementById('print-btn');
+      const dropOverlay = document.getElementById('drop-overlay');
+      const initialDropZone = document.getElementById('initial-drop-zone');
+      const editorContainer = editor.parentElement;
+
+      // Set marked options
+      marked.setOptions({
+        highlight: function(code, lang) {
+          if (lang && hljs.getLanguage(lang)) {
+            return hljs.highlight(code, { language: lang }).value;
+          } else {
+            return hljs.highlightAuto(code).value;
+          }
+        },
+        breaks: true,
+        gfm: true
+      });
+
+      // Function to render markdown
+      function renderMarkdown() {
+        const markdownText = editor.value;
+        const htmlContent = marked.parse(markdownText);
+        preview.innerHTML = htmlContent;
+        
+        // Apply syntax highlighting to code blocks (no line numbers in preview)
+        document.querySelectorAll('#preview pre code').forEach((el) => {
+          hljs.highlightElement(el);
+        });
+
+        // Save to local storage
+        localStorage.setItem('markdownContent', markdownText);
+        
+        // Hide initial drop zone if we have content
+        if (markdownText.trim().length > 0) {
+          initialDropZone.classList.add('hidden');
+        } else {
+          initialDropZone.classList.remove('hidden');
+        }
+      }
+
+      // Synchronize scrolling
+      let isEditorScrolling = false;
+      let isPreviewScrolling = false;
+
+      editor.addEventListener('scroll', function() {
+        if (!isPreviewScrolling) {
+          isEditorScrolling = true;
+          const editorScrollRatio = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
+          previewContainer.scrollTop = editorScrollRatio * (previewContainer.scrollHeight - previewContainer.clientHeight);
+          setTimeout(() => { isEditorScrolling = false; }, 100);
+        }
+      });
+
+      previewContainer.addEventListener('scroll', function() {
+        if (!isEditorScrolling) {
+          isPreviewScrolling = true;
+          const previewScrollRatio = previewContainer.scrollTop / (previewContainer.scrollHeight - previewContainer.clientHeight);
+          editor.scrollTop = previewScrollRatio * (editor.scrollHeight - editor.clientHeight);
+          setTimeout(() => { isPreviewScrolling = false; }, 100);
+        }
+      });
+
+      // Function to handle file drop
+      function handleFileDrop(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          editor.value = e.target.result;
+          renderMarkdown();
+          dropOverlay.classList.add('hidden');
+        };
+        reader.readAsText(file);
+      }
+
+      // Function to show notification
+      function showNotification(message, isSuccess) {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-16 right-4 ${isSuccess ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-2 rounded shadow-lg z-50 animate-fade-in`;
+        notification.innerHTML = `<i class="fas ${isSuccess ? 'fa-check' : 'fa-times'} mr-2"></i> ${message}`;
+        notification.style.animation = 'fadeInOut 2s forwards';
+        document.body.appendChild(notification);
+        
+        const style = document.createElement('style');
+        style.textContent = `
+          @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+          }
+        `;
+        document.head.appendChild(style);
+        
+        setTimeout(function() {
+          document.body.removeChild(notification);
+        }, 2000);
+      }
+
+      // Example content
+      const exampleMarkdown = `# Markdown Editor Demo
+
+## Welcome to the Markdown Editor!
+
+This is a **powerful** markdown editor that renders your content in real-time.
+
+### Features
+
+- Split-view editor and preview
+- Syntax highlighting for code blocks
+- DB Markdown-inspired styling
+- Print-friendly output with line numbers
+- Local storage saving
+- File drop support (.md, .markdown)
+
+### Code Example
+
+\`\`\`javascript
+// This code has syntax highlighting
+function renderMarkdown() {
+  const markdownText = editor.value;
+  const htmlContent = marked.parse(markdownText);
+  preview.innerHTML = htmlContent;
+  
+  // Apply syntax highlighting to code blocks
+  document.querySelectorAll('#preview pre code').forEach((el) => {
+    hljs.highlightElement(el);
+  });
+}
+\`\`\`
+
+You can use \`inline code\` with light blue background for better readability.
+
+### Table Example
+
+| Feature | Description |
+|---------|-------------|
+| Editor | Write or paste markdown text |
+| Preview | See rendered output in real-time |
+| Print | Generate a printer-friendly version |
+| Save | Content auto-saves to local storage |
+| File Drop | Drag & drop markdown files to load |
+
+> This editor is perfect for drafting documentation, README files, or any markdown content.
+
+Visit [GitHub Markdown Guide](https://guides.github.com/features/mastering-markdown/) to learn more about markdown syntax.
+
+![Example Image](https://via.placeholder.com/800x400)
+
+---
+
+Made with ❤️ for markdown enthusiasts
+`;
+
+      // Load saved content or show drop zone
+      const savedContent = localStorage.getItem('markdownContent');
+      if (savedContent) {
+        editor.value = savedContent;
+        initialDropZone.classList.add('hidden');
+      } else {
+        editor.value = '';
+        initialDropZone.classList.remove('hidden');
+      }
+      renderMarkdown();
+
+      // Event listeners
+      editor.addEventListener('input', renderMarkdown);
+      
+      // Click the drop zone to focus on editor
+      initialDropZone.addEventListener('click', function() {
+        initialDropZone.classList.add('hidden');
+        editor.focus();
+      });
+      
+      // Instructions modal
+      instructionsBtn.addEventListener('click', function() {
+        instructionsModal.style.display = 'flex';
+      });
+      
+      modalClose.addEventListener('click', function() {
+        instructionsModal.style.display = 'none';
+      });
+      
+      // Close modal when clicking outside
+      instructionsModal.addEventListener('click', function(e) {
+        if (e.target === instructionsModal) {
+          instructionsModal.style.display = 'none';
+        }
+      });
+      
+      clearBtn.addEventListener('click', function() {
+        editor.value = '';
+        renderMarkdown();
+        initialDropZone.classList.remove('hidden');
+      });
+      
+      exampleBtn.addEventListener('click', function() {
+        editor.value = exampleMarkdown;
+        renderMarkdown();
+        initialDropZone.classList.add('hidden');
+      });
+      
+      copyMarkdownBtn.addEventListener('click', function() {
+        const markdownContent = editor.value;
+        navigator.clipboard.writeText(markdownContent)
+          .then(() => showNotification('Markdown copied to clipboard!', true))
+          .catch(() => showNotification('Failed to copy Markdown.', false));
+      });
+      
+      copyBtn.addEventListener('click', function() {
+        const htmlContent = preview.innerHTML;
+        navigator.clipboard.writeText(htmlContent)
+          .then(() => showNotification('HTML copied to clipboard!', true))
+          .catch(() => showNotification('Failed to copy HTML.', false));
+      });
+      
+      printBtn.addEventListener('click', function() {
+        const printWindow = window.open('', '_blank');
+        const printTemplate = document.getElementById('print-template').innerHTML;
+        const htmlContent = preview.innerHTML;
+        
+        printWindow.document.open();
+        const finalHtml = printTemplate.replace('<div id="print-content"></div>', `<div id="print-content">${htmlContent}</div>`);
+        printWindow.document.write(finalHtml);
+        printWindow.document.close();
+      });
+      
+      // File drop handling
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      // Show drop overlay when dragging files over the document
+      ['dragenter', 'dragover'].forEach(eventName => {
+        document.body.addEventListener(eventName, function() {
+          dropOverlay.classList.remove('hidden');
+        });
+      });
+      
+      // Hide drop overlay when leaving or dropping
+      document.body.addEventListener('dragleave', function(e) {
+        if (e.target === document.body || e.target === document.documentElement) {
+          dropOverlay.classList.add('hidden');
+        }
+      });
+      
+      // Handle dropped files
+      document.body.addEventListener('drop', function(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length) {
+          const file = files[0];
+          const fileName = file.name.toLowerCase();
+          
+          if (fileName.endsWith('.md') || fileName.endsWith('.markdown')) {
+            handleFileDrop(file);
+          } else {
+            showNotification('Please drop a .md or .markdown file.', false);
+          }
+        }
+        
+        dropOverlay.classList.add('hidden');
+      });
+      
+      // Add animation to buttons
+      document.querySelectorAll('button').forEach(button => {
+        button.addEventListener('mousedown', function() {
+          this.classList.add('transform', 'scale-95');
+        });
+        button.addEventListener('mouseup', function() {
+          this.classList.remove('transform', 'scale-95');
+        });
+        button.addEventListener('mouseleave', function() {
+          this.classList.remove('transform', 'scale-95');
+        });
+      });
+    });
+  </script>
+</body>
+</html>
