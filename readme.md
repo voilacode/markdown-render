@@ -132,7 +132,7 @@ Found a bug or have a feature request? Open an issue on the [GitHub repository](
 
 ## License
 
-This project is **free and open-source** under the [MIT License](LICENSE). You are welcome to use, modify, and distribute it for any purpose.
+This project is **free and open-source** under the GNU General Public License v3.0. You are welcome to use, modify, and distribute it, provided that derivative works are also licensed under the GPL.
 
 ## Credits
 
