@@ -19,15 +19,15 @@ A lightweight, web-based Markdown editor with real-time preview, syntax highligh
 
 ## Demo
 
-Try the editor live by opening `index.html` in a web browser or hosting it on a server. A sample Markdown file is included in the repository (`example.md`) to test the file drop feature.
+Try the editor live at [https://voilacode.github.io/markdown-render/](https://voilacode.github.io/markdown-render/). You can paste or type Markdown content directly in the editor to test its features.
 
 ## Installation
 
 1. **Clone the Repository**:
 
    ```bash
-   git clone https://github.com/your-username/markdown-editor-renderer.git
-   cd markdown-editor-renderer
+   git clone https://github.com/voilacode/markdown-render.git
+   cd markdown-render
    ```
 
 2. **Open the Application**:
@@ -71,9 +71,8 @@ Try the editor live by opening `index.html` in a web browser or hosting it on a 
 ## Project Structure
 
 ```
-markdown-editor-renderer/
+markdown-render/
 ├── index.html         # Main application file
-├── example.md         # Sample Markdown file for testing
 ├── README.md         # This file
 ```
 
@@ -111,7 +110,7 @@ Please ensure your code follows the existing style and includes appropriate comm
 
 ## Issues
 
-If you encounter bugs or have feature requests, please open an issue on the [GitHub repository](https://github.com/your-username/markdown-editor-renderer/issues). Provide detailed information, including:
+If you encounter bugs or have feature requests, please open an issue on the [GitHub repository](https://github.com/voilacode/markdown-render/issues). Provide detailed information, including:
 
 - Browser and version.
 - Steps to reproduce the issue.
@@ -119,7 +118,7 @@ If you encounter bugs or have feature requests, please open an issue on the [Git
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project currently does not include a license file. Please contact the repository owner for licensing information.
 
 ## Credits
 
